@@ -1,0 +1,18 @@
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environments
+venv/
+.venv/
+
+# Ignore Excel files (to prevent committing personal lists)
+levylista.xlsx
+
+# Ignore log files
+*.log
+
+# Ignore environment files (if needed later)
+.env
