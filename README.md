@@ -2,7 +2,7 @@
 
 Tämä Python-skripti tarkistaa, ovatko tietyt levyt saatavilla Rolling Records -verkkokaupasta. Se lukee levyjen nimet ja URL-osoitteet **Excel-tiedostosta (`levylista.xlsx`)** ja tarkistaa saatavuuden verkkosivulta.
 
-## 🔧 Asennus
+##  Asennus
 
 1. **Asenna vaaditut kirjastot**:
    ```sh
