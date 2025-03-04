@@ -10,7 +10,7 @@ Tämä Python-skripti tarkistaa, ovatko tietyt levyt saatavilla Rolling Records 
 
 1. **Asenna vaaditut kirjastot**:
    ```sh
-   pip install requests beautifulsoup4 pandas openpyxl
+   pip install requests beautifulsoup4 pandas openpyxl dotenv
    ```
 
 2. **Varmista, että sinulla on `levylista.xlsx` oikeassa muodossa**:
@@ -27,6 +27,7 @@ Tämä Python-skripti tarkistaa, ovatko tietyt levyt saatavilla Rolling Records 
 3. Skripti tarkistaa jokaisen levyn saatavuuden ja tulostaa:
    - *Albumi X on saatavilla Rolling Recordista!*
    -  *Albumi X ei ole saatavilla Rolling Recordista.*
+Levylista ja Telegram-botin tunnukset .evn-tiedostossa, joka huomioidaan .gitignoressa.
 
 ##  Huomioitavaa
 - Varmista, että `levylista.xlsx` ei sisällä tyhjiä rivejä tai otsikoita.
