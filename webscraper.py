@@ -26,7 +26,6 @@ def send_telegram_message(message):
     return response.json()  # Debugging output
 
 def check_product_availability(album_name, url):
-    """Check if a product is available on the website."""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9",
@@ -50,7 +49,7 @@ def check_product_availability(album_name, url):
             print(f"❌ Albumi {album_name} ei ole saatavilla Rolling Recordista.")
             return False
         else:
-            message = f"✅ Albumi {album_name} on saatavilla Rolling Recordista!\n🔗 Linkki: {url}"
+            message = f"✅ Albumi {album_name} on saatavilla Rolling Recordista!\n Linkki: {url}"
             print(message)
             send_telegram_message(message)
             return True

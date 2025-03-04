@@ -4,15 +4,15 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Ignore virtual environments
+# Ignorataan venvit, ettei telegramin tunnukset vuoda nettiin
 venv/
 .venv/
 
-# Ignore Excel files (to prevent committing personal lists)
+# Ignorataan Excel filut 
 levylista.xlsx
 
 # Ignore log files
 *.log
 
-# Ignore environment files (if needed later)
+# Ignorataan venvit, ettei telegramin tunnukset vuoda nettiin
 .env
