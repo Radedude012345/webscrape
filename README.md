@@ -1,3 +1,7 @@
+Viimeisimmät muutokset:
+4.3.2025: Lisätty telegram-integraatio ilmoituksia varten.
+
+
 # Levyjen saatavuuden tarkistin
 
 Tämä Python-skripti tarkistaa, ovatko tietyt levyt saatavilla Rolling Records -verkkokaupasta. Se lukee levyjen nimet ja URL-osoitteet **Excel-tiedostosta (`levylista.xlsx`)** ja tarkistaa saatavuuden verkkosivulta.
