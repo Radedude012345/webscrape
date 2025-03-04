@@ -13,7 +13,7 @@ Tämä Python-skripti tarkistaa, ovatko tietyt levyt saatavilla Rolling Records 
    - Ensimmäinen sarake: **Levyn nimi**
    - Toinen sarake: **Levyn URL**
 
-## 🚀 Käyttö
+## Käyttö
 
 1. Lisää levyt `levylista.xlsx`-tiedostoon oikeassa muodossa.
 2. Suorita skripti:
@@ -22,13 +22,13 @@ Tämä Python-skripti tarkistaa, ovatko tietyt levyt saatavilla Rolling Records 
    ```
 3. Skripti tarkistaa jokaisen levyn saatavuuden ja tulostaa:
    - *Albumi X on saatavilla Rolling Recordista!*
-   - ❌ *Albumi X ei ole saatavilla Rolling Recordista.*
+   -  *Albumi X ei ole saatavilla Rolling Recordista.*
 
 ##  Huomioitavaa
 - Varmista, että `levylista.xlsx` ei sisällä tyhjiä rivejä tai otsikoita.
 - Jos verkkosivusto muuttaa rakennettaan, `button`-elementin valinta voi tarvita päivitystä.
 
-## 🛠 Tulevia Parannuksia
+##  Tulevia Parannuksia
 -  **Telegram-ilmoitukset, kun levy tulee saataville**
 -  **Tulosten tallennus tiedostoon tai tietokantaan**
 -  **Useamman verkkokaupan tuki**
