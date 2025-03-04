@@ -37,11 +37,11 @@ if __name__ == "__main__":
     excel_file = "levylista.xlsx"  # Excel muotoinen levylista
     
     try:
-        df = pd.read_excel(excel_file, usecols=[0, 1], header=None)  # Read the first two columns
+        df = pd.read_excel(excel_file, usecols=[0, 1], header=None)  # Luetaan kaksi kolumnia, joista toinen on levyn URL ja toinen on nimi 
         for index, row in df.iterrows():
             album_name, product_url = row[0], row[1]
             check_product_availability(album_name, product_url)
     except FileNotFoundError:
         print("Levylistaa ei löytynyt.")
     except Exception as e:
-        print(f"Virhe levylistan lukemisessa: {e}")
+        print(f"Virhe levylistan {e}", " lukemisessa")
