@@ -10,6 +10,7 @@ venv/
 
 # Ignorataan Excel filut 
 levylista.xlsx
+levylista_bw.xlsx
 
 # Ignore log files
 *.log
