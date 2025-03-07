@@ -5,7 +5,6 @@ import re
 from bs4 import BeautifulSoup
 import pandas as pd
 from dotenv import load_dotenv
-from rapidfuzz import fuzz
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -30,88 +29,70 @@ def normalize_name(name):
     name = re.sub(r"[^a-z0-9 ]", "", name)  # Remove special characters
     return name.strip()
 
-def is_match(album_name, found_album):
-    if len(album_name) < 5:  # Short names require exact match
-        return album_name == found_album
-    similarity = fuzz.ratio(album_name, found_album)
-    return similarity > 85  # Keep fuzzy matching for longer names
-
-
-def scrape_albums(base_url, page_limit, album_list, found_albums):
-    """Scrapes the given website for album availability."""
+def search_artist(artist, album, found_albums):
+    """Search for an artist and check if the album exists in search results (LP format only)."""
+    base_url = "https://blackandwhite.fi/fi/index.php?fc=module&module=iqitsearch&controller=searchiqit&id_lang=4&search_query="
+    search_url = f"{base_url}{artist.replace(' ', '+')}&formaatti=lp"
+    
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9",
         "Referer": "https://www.google.com",
     }
     
-    for page in range(1, page_limit + 1):
-        url = f"{base_url}?page={page}"
+    try:
+        response = requests.get(search_url, headers=headers, timeout=10)
+        if response.status_code != 200:
+            print(f"❌ Failed to search for {artist}. Status Code: {response.status_code}")
+            return
         
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code != 200:
-                continue
-
-            soup = BeautifulSoup(response.text, "html.parser")
-            
-            # Find all album elements (Filtering only relevant links)
-            album_elements = soup.select("a[href^='https://blackandwhite.fi/fi/']")
-            
-            page_albums = set()
-            for album in album_elements:
-                album_text = album.get_text(strip=True)
-                if ":" in album_text:
-                    album_name = album_text.split(":", 1)[1].strip()  # Extract part after ':'
-                else:
-                    album_name = album_text  # Fallback if ':' is missing
-                
-                album_name = normalize_name(album_name)  # Normalize name
-                if album_name:
-                    page_albums.add(album_name)
-            
-            # Check if any albums in our list exist on this page
-            for album in album_list:
-                formatted_album = normalize_name(album)
-                if any(is_match(formatted_album, found_album) for found_album in page_albums):
-                    message = f"✅ Album '{album}' is available at Black and White Records!\nLink: {url}"
-                    print(message)
-                    send_telegram_message(message)
-                    found_albums.add(album)  # Track found albums
-            
-            # Stop searching if all albums have been found
-            if len(found_albums) == len(album_list):
-                break
+        soup = BeautifulSoup(response.text, "html.parser")
+        album_elements = soup.select("h2.h3.product-title a")
         
-        except requests.exceptions.RequestException:
-            continue
+        for album_element in album_elements:
+            album_text = album_element.get_text(strip=True)
+            if ":" in album_text:
+                scraped_album = album_text.split(":", 1)[1].strip()  # Extract part after ':'
+            else:
+                scraped_album = album_text  # Fallback if ':' is missing
+            
+            scraped_album = normalize_name(scraped_album)
+            formatted_album = normalize_name(album)
+            
+            if formatted_album == scraped_album:
+                message = f"✅ Album '{album}' by '{artist}' is available at Black and White Records!\nLink: {search_url}"
+                print(message)
+                send_telegram_message(message)
+                found_albums.add((artist, album))
+                return  # Stop checking once found
+    
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Error searching for {artist}: {e}")
 
 def main():
     start_time = time.time()
     
     excel_file = "levylista_bw.xlsx"  # Album list Excel file
-    all_records_url = "https://blackandwhite.fi/fi/21-kaikki-vinyylit"
-    page_limit = 200
-
     try:
-        df = pd.read_excel(excel_file, usecols=[0], header=None)  # Read first column only
-        album_list = df[0].dropna().tolist()  # Convert to list and remove NaN values
+        df = pd.read_excel(excel_file, usecols=[0, 1], header=None, names=["Artist", "Album"])  # Read two columns
+        album_list = [tuple(row) for row in df.dropna().values.tolist()]  # Convert to list of (Artist, Album) tuples
         
         searched_albums = set(album_list)  # Track all albums searched
         found_albums = set()  # Track albums that were found
         
-        # Scrape all records page
-        scrape_albums(all_records_url, page_limit, album_list, found_albums)
+        # Search for each artist and check for the album (LP format only)
+        for artist, album in album_list:
+            search_artist(artist, album, found_albums)
         
         # Determine which albums were not found
         not_found_albums = searched_albums - found_albums
-        for album in not_found_albums:
-            print(f"❌ Album '{album}' was not found in Black and White Records.")
-
+        for artist, album in not_found_albums:
+            print(f"❌ Album '{album}' by '{artist}' was not found in Black and White Records.")
+    
     except FileNotFoundError:
         print("❌ Album list not found.")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"❌ Error processing album list: {e}")
     
     end_time = time.time()
     print(f"⏱️ Runtime: {end_time - start_time:.2f} seconds")
