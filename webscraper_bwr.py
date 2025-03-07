@@ -1,9 +1,11 @@
 import os
 import requests
 import time
+import re
 from bs4 import BeautifulSoup
 import pandas as pd
 from dotenv import load_dotenv
+from rapidfuzz import fuzz
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -20,6 +22,20 @@ def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
     requests.post(url, data=payload)
+
+def normalize_name(name):
+    """Normalize album names by removing unnecessary words and special characters."""
+    name = name.lower()
+    name = re.sub(r"\b(lp|2-lp|vinyl|reissue|special edition|deluxe|limited)\b", "", name)  # Remove common suffixes
+    name = re.sub(r"[^a-z0-9 ]", "", name)  # Remove special characters
+    return name.strip()
+
+def is_match(album_name, found_album):
+    if len(album_name) < 5:  # Short names require exact match
+        return album_name == found_album
+    similarity = fuzz.ratio(album_name, found_album)
+    return similarity > 85  # Keep fuzzy matching for longer names
+
 
 def scrape_albums(base_url, page_limit, album_list, found_albums):
     """Scrapes the given website for album availability."""
@@ -40,18 +56,24 @@ def scrape_albums(base_url, page_limit, album_list, found_albums):
             soup = BeautifulSoup(response.text, "html.parser")
             
             # Find all album elements (Filtering only relevant links)
-            album_elements = soup.select("a[href*='/fi/kaeytetyt-vinyylit/'], a[href*='/fi/uudet-vinyylit/']")
+            album_elements = soup.select("a[href^='https://blackandwhite.fi/fi/']")
             
             page_albums = set()
             for album in album_elements:
-                album_name = album.get_text(strip=True)
-                if album_name and ":" in album_name:  # Ensuring it's a valid album format
-                    page_albums.add(album_name.lower())
+                album_text = album.get_text(strip=True)
+                if ":" in album_text:
+                    album_name = album_text.split(":", 1)[1].strip()  # Extract part after ':'
+                else:
+                    album_name = album_text  # Fallback if ':' is missing
+                
+                album_name = normalize_name(album_name)  # Normalize name
+                if album_name:
+                    page_albums.add(album_name)
             
             # Check if any albums in our list exist on this page
             for album in album_list:
-                formatted_album = album.lower().strip()
-                if any(formatted_album in found_album for found_album in page_albums):
+                formatted_album = normalize_name(album)
+                if any(is_match(formatted_album, found_album) for found_album in page_albums):
                     message = f"✅ Album '{album}' is available at Black and White Records!\nLink: {url}"
                     print(message)
                     send_telegram_message(message)
@@ -68,9 +90,8 @@ def main():
     start_time = time.time()
     
     excel_file = "levylista_bw.xlsx"  # Album list Excel file
-    new_records_url = "https://blackandwhite.fi/fi/22-uudet-vinyylit"
-    used_records_url = "https://blackandwhite.fi/fi/23-kaeytetyt-vinyylit"
-    page_limit = 10
+    all_records_url = "https://blackandwhite.fi/fi/21-kaikki-vinyylit"
+    page_limit = 200
 
     try:
         df = pd.read_excel(excel_file, usecols=[0], header=None)  # Read first column only
@@ -79,9 +100,8 @@ def main():
         searched_albums = set(album_list)  # Track all albums searched
         found_albums = set()  # Track albums that were found
         
-        # Scrape both new and used records
-        scrape_albums(new_records_url, page_limit, album_list, found_albums)
-        scrape_albums(used_records_url, page_limit, album_list, found_albums)
+        # Scrape all records page
+        scrape_albums(all_records_url, page_limit, album_list, found_albums)
         
         # Determine which albums were not found
         not_found_albums = searched_albums - found_albums
@@ -94,7 +114,7 @@ def main():
         pass
     
     end_time = time.time()
-    print(f"Runtime: {end_time - start_time:.2f} seconds")
+    print(f"⏱️ Runtime: {end_time - start_time:.2f} seconds")
 
 if __name__ == "__main__":
     main()
